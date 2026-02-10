@@ -37,9 +37,6 @@ Where:
 ## 💾 Exporting Data
 Click the **Export CSV** button to download your calculation table for use in lab notebooks or record keeping.
 
-<img width="959" height="648" alt="Screenshot 2026-02-10 at 8 10 25 AM" src="https://github.com/user-attachments/assets/6de5f003-cc07-4292-bc0e-09f53378d4cd" />
-
-
 
 
 <img width="959" height="648" alt="Screenshot 2026-02-10 at 8 10 25 AM" src="https://github.com/user-attachments/assets/90ae9491-6ec5-41ac-98e1-e9934f7342cb" />
