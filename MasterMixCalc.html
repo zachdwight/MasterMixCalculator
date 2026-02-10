@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Master Mix Calculator</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+body { background:#f8f9fa; }
+
+.table-wrapper { overflow-x:auto; }
+table { table-layout:fixed; min-width:max-content; }
+
+th, td {
+  min-width:72px;
+  max-width:96px;
+  text-align:center;
+  font-size:0.85rem;
+  padding:0.25rem;
+  white-space:nowrap;
+}
+
+.output {
+  background:#f1f3f5;
+  font-weight:500;
+  text-align:left;
+  padding-left:6px;
+}
+
+.label-wrap {
+  display:flex;
+  align-items:center;
+  gap:4px;
+  cursor:grab;
+}
+
+.label-wrap input {
+  width:100%;
+  max-width:72px;
+  font-size:0.8rem;
+  padding:2px 4px;
+}
+
+.label-wrap button { opacity:0.25; padding:0 6px; }
+th:hover .label-wrap button { opacity:1; }
+
+/* remove-all hover polish */
+th .remove-all-btn { opacity:0.35; }
+th:hover .remove-all-btn { opacity:1; }
+
+@media (max-width:768px) { .table-wrapper { display:none; } }
+@media (min-width:769px) { .mobile-cards { display:none; } }
+
+.component-card {
+  background:#fff;
+  border-radius:0.5rem;
+  padding:0.75rem;
+  box-shadow:0 2px 6px rgba(0,0,0,0.05);
+  margin-bottom:0.75rem;
+}
+</style>
+</head>
+
+<body>
+<div class="container my-4">
+
+<h4>Master Mix Calculator</h4>
+
+<div class="alert alert-info small">
+This is a generic master mix calculator. The defaults are set for a PCR master mix, but components can be added or removed and component names can be changed. Enter in the relative concentrations of stock and final components (units don’t matter), the master mix fold (e.g. 2, 5, 10), the volume of one reaction (uL) and number of reactions desired. The program returns the volume of each stock component and water, the total master mix volume, and the total component volume. If the total component volume is greater than the master mix volume, an error indicates that you must reduce the master mix fold (or increase the concentration of the stock components).
+</div>
+
+<!-- Toolbar -->
+<div class="d-flex justify-content-end gap-2 mb-3">
+
+<button class="btn btn-success btn-sm" onclick="addComponent()">
+<i class="fa-solid fa-plus me-1"></i>
+Add Component
+</button>
+
+<button class="btn btn-outline-primary btn-sm" onclick="exportCSV()">
+<i class="fa-solid fa-file-csv me-1"></i>
+Export CSV
+</button>
+
+<a href="https://dna-utah.org"
+   class="btn btn-outline-secondary btn-sm"
+   target="_blank">
+<i class="fa-solid fa-house me-1"></i>
+Return to DNA-UTAH.ORG
+</a>
+
+</div>
+
+<div class="card shadow-sm">
+<div class="card-body">
+
+<div class="table-wrapper">
+<table class="table table-bordered table-sm mb-0">
+
+<thead>
+<tr id="header-row">
+
+<th>
+<div class="d-flex justify-content-between align-items-center">
+
+<span>Component</span>
+
+<button
+ class="btn btn-sm btn-outline-danger remove-all-btn"
+ onclick="removeAllComponents()"
+ data-bs-toggle="tooltip"
+ title="Remove all components"
+ style="padding:0 6px;">
+ <i class="fa-solid fa-xmark"></i>
+</button>
+
+</div>
+</th>
+
+<th>Water</th>
+
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<th data-bs-toggle="tooltip" title="Relative concentration of stock reagent">Stock</th>
+<td class="output">—</td>
+</tr>
+
+<tr>
+<th data-bs-toggle="tooltip" title="Desired final concentration">Final</th>
+<td class="output">—</td>
+</tr>
+
+<tr>
+<th data-bs-toggle="tooltip" title="Volume required">Volume (µL)</th>
+<td class="output" id="vol-water"></td>
+</tr>
+
+</tbody>
+</table>
+</div>
+
+<div class="row g-3 mt-3">
+<div class="col-md-4">
+<label class="form-label" data-bs-toggle="tooltip" title="Fold concentration of master mix">
+Master Mix Fold (X)
+</label>
+<input class="form-control" id="fold" value="5">
+</div>
+
+<div class="col-md-4">
+<label class="form-label" data-bs-toggle="tooltip" title="Final reaction volume">
+Reaction Volume (µL)
+</label>
+<input class="form-control" id="rxnVol" value="10">
+</div>
+
+<div class="col-md-4">
+<label class="form-label" data-bs-toggle="tooltip" title="Total reactions">
+Number of Reactions
+</label>
+<input class="form-control" id="rxns" value="500">
+</div>
+</div>
+
+<hr>
+
+<div><strong>Master Mix Volume:</strong> <span id="totalMMV"></span> µL</div>
+<div><strong>Total Component Volume:</strong> <span id="totalVol"></span> µL</div>
+<div id="warning" class="text-danger mt-1"></div>
+
+</div>
+</div>
+
+<div class="mobile-cards mt-3"></div>
+
+</div>
+
+<script>
+const num=v=>parseFloat(v)||0;
+
+/* ---------- STATE ---------- */
+let components=[
+{ id:"poly", label:"Polymerase", stock:500, final:1 },
+{ id:"bsa", label:"BSA", stock:20, final:0.25 },
+{ id:"tris", label:"Tris", stock:2000, final:50 },
+{ id:"mg", label:"MgCl₂", stock:1000, final:3 },
+{ id:"dntp", label:"dNTPs", stock:25, final:0.2 },
+{ id:"dye", label:"Dye", stock:10, final:1 }
+];
+
+/* ---------- RENDER ---------- */
+function render(){
+renderTable();
+renderMobile();
+recalc();
+initTooltips();
+}
+
+function renderTable(){
+
+const header=document.getElementById("header-row");
+const rows=document.querySelectorAll("tbody tr");
+
+[...header.children].slice(1,-1).forEach(e=>e.remove());
+rows.forEach(r=>[...r.children].slice(1,-1).forEach(e=>e.remove()));
+
+components.forEach((c,i)=>{
+
+const th=document.createElement("th");
+th.draggable=true;
+th.dataset.index=i;
+
+th.innerHTML=`
+<div class="label-wrap">
+<input value="${c.label}">
+<button class="btn btn-sm btn-outline-danger"
+onclick="removeComponent(${i})">×</button>
+</div>`;
+
+enableDrag(th);
+header.insertBefore(th,header.lastElementChild);
+
+rows[0].insertBefore(inputCell(c,"stock"),rows[0].lastElementChild);
+rows[1].insertBefore(inputCell(c,"final"),rows[1].lastElementChild);
+rows[2].insertBefore(outputCell(c),rows[2].lastElementChild);
+
+});
+}
+
+function inputCell(c,field){
+const td=document.createElement("td");
+td.innerHTML=`<input class="form-control" data-id="${c.id}" data-field="${field}" value="${c[field]}">`;
+return td;
+}
+
+function outputCell(c){
+const td=document.createElement("td");
+td.className="output";
+td.id=`vol-${c.id}`;
+return td;
+}
+
+/* ---------- MOBILE ---------- */
+function renderMobile(){
+const wrap=document.querySelector(".mobile-cards");
+wrap.innerHTML="";
+
+components.forEach((c,i)=>{
+wrap.innerHTML+=`
+<div class="component-card">
+<div class="d-flex justify-content-between">
+<strong>${c.label}</strong>
+<button class="btn btn-sm btn-outline-danger"
+onclick="removeComponent(${i})">×</button>
+</div>
+
+<div class="mt-2">Stock
+<input class="form-control" data-id="${c.id}" data-field="stock" value="${c.stock}">
+</div>
+
+<div class="mt-1">Final
+<input class="form-control" data-id="${c.id}" data-field="final" value="${c.final}">
+</div>
+</div>`;
+});
+}
+
+/* ---------- DRAG ---------- */
+function enableDrag(th){
+th.addEventListener("dragstart",e=>{
+e.dataTransfer.setData("from",th.dataset.index);
+});
+
+th.addEventListener("dragover",e=>e.preventDefault());
+
+th.addEventListener("drop",e=>{
+const from=+e.dataTransfer.getData("from");
+const to=+th.dataset.index;
+components.splice(to,0,components.splice(from,1)[0]);
+render();
+});
+}
+
+/* ---------- CALC ---------- */
+function recalc(){
+
+const fold=num(foldInput.value);
+const rxnVol=num(rxnVolInput.value);
+const rxns=num(rxnsInput.value);
+
+const mmv=(rxnVol*rxns)/fold;
+let used=0;
+
+components.forEach(c=>{
+const vol=(num(c.stock)&&num(c.final))
+? (rxnVol*rxns)/(num(c.stock)/num(c.final))
+:0;
+
+used+=vol;
+
+document.getElementById(`vol-${c.id}`).textContent=vol.toFixed(1);
+});
+
+const water=mmv-used;
+
+volWater.textContent=water<0?"X":water.toFixed(1);
+totalMMV.textContent=mmv.toFixed(1);
+totalVol.textContent=used.toFixed(1);
+
+warning.textContent=water<0?"⚠ Reduce Master Mix Fold":"";
+}
+
+/* ---------- CSV ---------- */
+function exportCSV(){
+
+let csv="Component,Stock,Final,Volume (uL)\n";
+
+components.forEach(c=>{
+const vol=document.getElementById(`vol-${c.id}`).textContent;
+csv+=`${c.label},${c.stock},${c.final},${vol}\n`;
+});
+
+csv+=`Water,, ,${volWater.textContent}\n\n`;
+csv+=`Master Mix Volume,, ,${totalMMV.textContent}\n`;
+csv+=`Total Component Volume,, ,${totalVol.textContent}\n`;
+
+const blob=new Blob([csv],{type:"text/csv"});
+const a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="master_mix.csv";
+a.click();
+}
+
+/* ---------- ACTIONS ---------- */
+function addComponent(){
+components.push({
+id:"c"+Date.now(),
+label:"Component",
+stock:0,
+final:0
+});
+render();
+}
+
+function removeComponent(i){
+if(!confirm("Remove this component?")) return;
+components.splice(i,1);
+render();
+}
+
+/* Remove ALL with auto safety component */
+function removeAllComponents(){
+
+if(!components.length) return;
+
+if(!confirm("Remove ALL components? This cannot be undone.")) return;
+
+components=[
+{ id:"c"+Date.now(), label:"Component", stock:0, final:0 }
+];
+
+render();
+}
+
+/* ---------- INPUT ---------- */
+document.addEventListener("input",e=>{
+const t=e.target;
+
+if(t.dataset?.id){
+const c=components.find(x=>x.id===t.dataset.id);
+if(c) c[t.dataset.field]=t.value;
+}
+
+if(t.closest(".label-wrap")){
+const idx=[...t.closest("tr").children]
+.indexOf(t.closest("th"))-1;
+
+if(components[idx]) components[idx].label=t.value;
+}
+
+recalc();
+});
+
+/* ---------- TOOLTIP ---------- */
+function initTooltips(){
+[...document.querySelectorAll('[data-bs-toggle="tooltip"]')]
+.forEach(el=>new bootstrap.Tooltip(el));
+}
+
+const foldInput=document.getElementById("fold");
+const rxnVolInput=document.getElementById("rxnVol");
+const rxnsInput=document.getElementById("rxns");
+
+const volWater=document.getElementById("vol-water");
+const totalMMV=document.getElementById("totalMMV");
+const totalVol=document.getElementById("totalVol");
+const warning=document.getElementById("warning");
+
+render();
+</script>
+</body>
+</html>
