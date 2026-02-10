@@ -1,7 +1,45 @@
-# MasterMixCalculator
-This is a generic master mix calculator. The defaults are set for a PCR master mix, but components can be added or removed and component names can be changed/dragged.
+# Master Mix Calculator
 
-Enter in the relative concentrations of stock and final components (units don’t matter), the master mix fold (e.g. 2, 5, 10), the volume of one reaction (uL) and number of reactions desired. The program returns the volume of each stock component and water, the total master mix volume, and the total component volume. If the total component volume is greater than the master mix volume, an error indicates that you must reduce the master mix fold (or increase the concentration of the stock components).
+A flexible utility for calculating reagent volumes for laboratory master mixes. While pre-configured for PCR, this calculator can be customized for any multi-component solution.  I used a variety of AI tools to consolidate features from an outdated tool I built years ago and make the UI cleaner.
+
+## 🧪 Features
+* **Dynamic Components**: Add or remove reagents and customize component names to suit your protocol.
+* **Concentration Agnostic**: Input stock and final concentrations in any units, as long as they remain consistent.
+* **Automatic Water Calculation**: Automatically determines the volume of water needed to reach your target master mix volume.
+* **Error Detection**: Alerts you if the total component volume exceeds the target master mix volume, suggesting a concentration or fold-change adjustment.
+
+---
+
+## 🚀 How to Use
+
+1. **Define Components**: Enter the **Stock** and **Final** concentration for each reagent.
+2. **Set Master Mix Fold (X)**: Specify the concentration factor of your master mix (e.g., 2, 5, or 10).
+3. **Set Volume Parameters**:
+    * **Reaction Volume ($\mu L$):** The volume of a single reaction.
+    * **Number of Reactions:** The total quantity of reactions you plan to prepare.
+4. **Review Results**: The program returns the required volume for each stock component and the necessary volume of water.
+
+---
+
+## 📐 Calculations & Logic
+
+The calculator uses the standard dilution formula for each component:
+
+$$V_{stock} = \frac{C_{final} \cdot V_{total}}{C_{stock}}$$
+
+Where:
+* $V_{total}$ is calculated based on the Master Mix Fold and the total number of reactions.
+* The **Water Volume** is determined by:  
+  $V_{water} = V_{MasterMix} - \sum V_{components}$.
+
+---
+
+## 💾 Exporting Data
+Click the **Export CSV** button to download your calculation table for use in lab notebooks or record keeping.
+
+<img width="959" height="648" alt="Screenshot 2026-02-10 at 8 10 25 AM" src="https://github.com/user-attachments/assets/6de5f003-cc07-4292-bc0e-09f53378d4cd" />
+
+
 
 
 <img width="959" height="648" alt="Screenshot 2026-02-10 at 8 10 25 AM" src="https://github.com/user-attachments/assets/90ae9491-6ec5-41ac-98e1-e9934f7342cb" />
