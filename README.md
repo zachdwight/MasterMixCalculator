@@ -1,6 +1,6 @@
 # Master Mix Calculator
 
-A flexible utility for calculating reagent volumes for laboratory master mixes. While pre-configured for PCR, this calculator can be customized for any multi-component solution.  I used a variety of AI tools to consolidate features from an outdated tool I built years ago and make the UI cleaner.  More importantly, I tried to consolidate the scripts so that any student/lab could easily copy out the calc for the purposes with less dependencies.
+A flexible utility for calculating reagent volumes for laboratory master mixes. While pre-configured for PCR, this calculator can be customized for any multi-component solution.  I used a variety of AI tools to consolidate features from an outdated tool I built years ago and make the UI cleaner.  More importantly, I tried to consolidate the scripts so that any student/lab could easily copy out the calc for their purposes with less dependencies.
 
 ## 🧪 Features
 * **Dynamic Components**: Add or remove reagents and customize component names to suit your protocol.
